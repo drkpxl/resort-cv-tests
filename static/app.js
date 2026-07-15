@@ -60,8 +60,19 @@ async function refresh() {
   setCard(
     "line",
     { none: "good", short: "warn", long: "bad" }[latest.line_status],
-    LINE_LABELS[latest.line_status],
-    `${latest.person_count} people in queue · ${sinceLabel(history, "line_status")}`
+    `${latest.person_count} ${latest.person_count === 1 ? "person" : "people"}`,
+    `${LINE_LABELS[latest.line_status].toLowerCase()} · ${sinceLabel(history, "line_status")}`
+  );
+
+  const today = data.today;
+  const peakNote = today.peak_ts
+    ? `peak ${today.peak} at ${new Date(today.peak_ts).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`
+    : "no one seen in line yet";
+  setCard(
+    "line-today",
+    "idle",
+    `${today.total_sightings}`,
+    `sightings since midnight · ${peakNote}`
   );
   setCard(
     "weather",

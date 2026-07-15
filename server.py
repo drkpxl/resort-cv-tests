@@ -111,6 +111,11 @@ def status():
     since = (
         datetime.now(timezone.utc) - timedelta(hours=config.HISTORY_HOURS)
     ).isoformat(timespec="seconds")
+    # "Today" starts at local midnight (observations are stored in UTC)
+    midnight = datetime.now().astimezone().replace(
+        hour=0, minute=0, second=0, microsecond=0
+    )
+    since_midnight = midnight.astimezone(timezone.utc).isoformat(timespec="seconds")
     with db() as conn:
         rows = [
             dict(r)
@@ -118,6 +123,21 @@ def status():
                 "SELECT * FROM observations WHERE ts >= ? ORDER BY ts", (since,)
             )
         ]
+        day = dict(
+            conn.execute(
+                """SELECT COALESCE(SUM(person_count), 0) AS total_sightings,
+                          COALESCE(MAX(person_count), 0) AS peak
+                   FROM observations WHERE ts >= ?""",
+                (since_midnight,),
+            ).fetchone()
+        )
+        day["peak_ts"] = None
+        if day["peak"] > 0:
+            day["peak_ts"] = conn.execute(
+                "SELECT ts FROM observations WHERE ts >= ? AND person_count = ?"
+                " ORDER BY ts LIMIT 1",
+                (since_midnight, day["peak"]),
+            ).fetchone()["ts"]
     latest = rows[-1] if rows else None
     stale = True
     if latest:
@@ -128,6 +148,7 @@ def status():
             "latest": latest,
             "stale": stale,
             "history": rows,
+            "today": day,
             "video_id": config.YOUTUBE_VIDEO_ID,
             "interval_seconds": config.ANALYZE_INTERVAL_SECONDS,
         }
