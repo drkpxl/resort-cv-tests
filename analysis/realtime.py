@@ -13,6 +13,7 @@ calls). Annotated frames stream to the browser as MJPEG.
 """
 
 import subprocess
+import threading
 import time
 from collections import defaultdict, deque
 
@@ -56,23 +57,48 @@ def _open_stream() -> subprocess.Popen:
 
 
 def mjpeg_stream():
-    """Generator yielding multipart JPEG chunks of annotated live frames."""
+    """Generator yielding multipart JPEG chunks of annotated live frames.
+
+    HLS delivers video in ~5s segments, so ffmpeg's output is naturally
+    bursty: ~20 frames arrive at once, then nothing for seconds. A reader
+    thread stockpiles frames in a jitter buffer while this loop plays them
+    out at a steady REALTIME_FPS - the same trick every video player uses.
+    """
     model = _get_model()
     proc = _open_stream()
     w, h = config.REALTIME_WIDTH, config.REALTIME_HEIGHT
     frame_bytes = w * h * 3
     polygon = _polygon_pixels((h, w))
 
-    trails = defaultdict(lambda: deque(maxlen=config.TRAIL_LENGTH))
-    queue_ids: set[int] = set()   # every track ID ever seen inside the queue
-    last_time = time.monotonic()
-    fps = 0.0
+    # Jitter buffer: reader thread appends, main loop pops at a fixed pace.
+    # maxlen bounds latency - if we fall behind, oldest frames drop silently.
+    buffer: deque[bytes] = deque(maxlen=config.REALTIME_FPS * 10)
+    reader_done = threading.Event()
 
-    try:
-        while True:
+    def reader():
+        while not reader_done.is_set():
             buf = proc.stdout.read(frame_bytes)
             if buf is None or len(buf) < frame_bytes:
                 break
+            buffer.append(buf)
+        reader_done.set()
+
+    thread = threading.Thread(target=reader, daemon=True)
+    thread.start()
+
+    trails = defaultdict(lambda: deque(maxlen=config.TRAIL_LENGTH))
+    queue_ids: set[int] = set()   # every track ID ever seen inside the queue
+    interval = 1.0 / config.REALTIME_FPS
+    next_deadline = time.monotonic()
+
+    try:
+        while True:
+            if not buffer:
+                if reader_done.is_set():
+                    break
+                time.sleep(0.05)
+                continue
+            buf = buffer.popleft()
             frame = np.frombuffer(buf, np.uint8).reshape(h, w, 3).copy()
 
             results = model.track(
@@ -108,13 +134,10 @@ def mjpeg_stream():
 
             cv2.polylines(frame, [polygon], True, (0, 255, 255), 2)
 
-            now = time.monotonic()
-            fps = 0.9 * fps + 0.1 * (1.0 / max(now - last_time, 1e-6))
-            last_time = now
             banner = (
                 f"tracking {people_now} people | in queue now: {in_queue_now} | "
                 f"unique queue visitors this session: {len(queue_ids)} | "
-                f"{fps:.1f} fps processed"
+                f"{config.REALTIME_FPS} fps, buffer {len(buffer) * interval:.1f}s"
             )
             cv2.rectangle(frame, (0, h - 28), (w, h), (0, 0, 0), -1)
             cv2.putText(frame, banner, (8, h - 8),
@@ -125,5 +148,15 @@ def mjpeg_stream():
                 continue
             yield (b"--frame\r\nContent-Type: image/jpeg\r\n\r\n"
                    + jpg.tobytes() + b"\r\n")
+
+            # Play out at a steady cadence; if processing ran long, catch up
+            # instead of sleeping.
+            next_deadline += interval
+            delay = next_deadline - time.monotonic()
+            if delay > 0:
+                time.sleep(delay)
+            else:
+                next_deadline = time.monotonic()
     finally:
+        reader_done.set()
         proc.kill()
