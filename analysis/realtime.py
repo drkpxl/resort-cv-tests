@@ -26,6 +26,16 @@ from analysis.line import _polygon_pixels
 
 _model = None
 
+# Only one live pipeline may exist. Leaked pipelines are not hypothetical:
+# a stalled generator that never yields can't be interrupted by disconnect
+# cleanup, and enough zombie ffmpegs pulling the same stream URL makes
+# YouTube stop serving this client entirely (which also starves the
+# 15-second snapshot loop). Starting a new stream kills the old one.
+_pipeline_lock = threading.Lock()
+_current_proc: subprocess.Popen | None = None
+
+STALL_TIMEOUT_SECONDS = 20.0
+
 
 def _get_model():
     # Separate instance from line.py: track() keeps tracker state on the
@@ -64,8 +74,13 @@ def mjpeg_stream():
     thread stockpiles frames in a jitter buffer while this loop plays them
     out at a steady REALTIME_FPS - the same trick every video player uses.
     """
+    global _current_proc
     model = _get_model()
-    proc = _open_stream()
+    with _pipeline_lock:
+        if _current_proc is not None and _current_proc.poll() is None:
+            _current_proc.kill()
+        proc = _open_stream()
+        _current_proc = proc
     w, h = config.REALTIME_WIDTH, config.REALTIME_HEIGHT
     frame_bytes = w * h * 3
     polygon = _polygon_pixels((h, w))
@@ -92,12 +107,18 @@ def mjpeg_stream():
     next_deadline = time.monotonic()
 
     try:
+        last_frame_at = time.monotonic()
         while True:
             if not buffer:
-                if reader_done.is_set():
+                # Watchdog: a stalled stream would otherwise leave this
+                # loop spinning forever without yielding, which blocks
+                # disconnect cleanup and leaks the ffmpeg process.
+                if (reader_done.is_set()
+                        or time.monotonic() - last_frame_at > STALL_TIMEOUT_SECONDS):
                     break
                 time.sleep(0.05)
                 continue
+            last_frame_at = time.monotonic()
             buf = buffer.popleft()
             frame = np.frombuffer(buf, np.uint8).reshape(h, w, 3).copy()
 
@@ -160,3 +181,6 @@ def mjpeg_stream():
     finally:
         reader_done.set()
         proc.kill()
+        with _pipeline_lock:
+            if _current_proc is proc:
+                _current_proc = None
