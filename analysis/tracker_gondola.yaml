@@ -1,0 +1,10 @@
+# ByteTrack config tuned for this camera: people are tiny (~20px) and far
+# away, so detection confidences run 0.25-0.5 — the stock config's 0.6
+# new_track_thresh means no track ever starts. Lowered across the board.
+tracker_type: bytetrack
+track_high_thresh: 0.2    # first-pass association
+track_low_thresh: 0.05    # second-pass (ByteTrack's trick: use weak dets too)
+new_track_thresh: 0.2     # confidence needed to birth a new track
+track_buffer: 40          # frames to keep a lost track alive (~10s at 4fps)
+match_thresh: 0.8         # IoU needed to match det to track
+fuse_score: true

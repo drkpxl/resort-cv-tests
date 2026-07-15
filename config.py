@@ -45,6 +45,15 @@ SUNNY_SAT_MIN = 50.0           # mean saturation; sunlight => vivid color
 # Ground region sampled for snow coverage (avoids buildings/trees at top)
 GROUND_ROI = (0.05, 0.55, 0.95, 0.98)
 
+# --- Real-time tracking mode (/static/live.html) ---
+# Continuous decode + YOLO tracking. 4 fps leaves headroom: one YOLO pass
+# at imgsz 1280 takes ~100-200ms on the M4, and falling behind the live
+# stream makes the ffmpeg pipe back up and lag grow unboundedly.
+REALTIME_FPS = 4
+REALTIME_WIDTH = 1280
+REALTIME_HEIGHT = 720
+TRAIL_LENGTH = 40              # tracked positions kept per person (~10s)
+
 # --- Storage / server ---
 DB_PATH = "data.db"
 DEBUG_FRAME_PATH = "static/debug_frame.jpg"

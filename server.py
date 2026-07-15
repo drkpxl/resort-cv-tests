@@ -9,11 +9,11 @@ from pathlib import Path
 
 import cv2
 from fastapi import FastAPI
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 
 import config
-from analysis import annotate, grab, line, motion, weather
+from analysis import annotate, grab, line, motion, realtime, weather
 
 log = logging.getLogger("gondola")
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s %(message)s")
@@ -152,6 +152,16 @@ def status():
             "video_id": config.YOUTUBE_VIDEO_ID,
             "interval_seconds": config.ANALYZE_INTERVAL_SECONDS,
         }
+    )
+
+
+@app.get("/api/live-feed")
+def live_feed():
+    """MJPEG stream of live YOLO tracking. Each connection runs its own
+    ffmpeg+YOLO pipeline, so keep it to one viewer at a time."""
+    return StreamingResponse(
+        realtime.mjpeg_stream(),
+        media_type="multipart/x-mixed-replace; boundary=frame",
     )
 
 

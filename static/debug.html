@@ -5,19 +5,46 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Gondola CV — Debug</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
-  <style>img { width: 100%; border-radius: 8px; }</style>
+  <style>
+    img { width: 100%; border-radius: 8px; }
+    .placeholder {
+      aspect-ratio: 16 / 9; display: flex; align-items: center;
+      justify-content: center; background: rgba(128,128,128,0.1);
+      border-radius: 8px; cursor: pointer;
+    }
+  </style>
 </head>
 <body>
   <main class="container">
     <hgroup>
-      <h1>Debug view</h1>
-      <p>The latest analyzed frame. Cyan = motion region (red pixels changed between frames).
-         Yellow = queue polygon. Green boxes = people counted in the queue; gray = people elsewhere.</p>
+      <h1>Live tracking</h1>
+      <p>Continuous decode at 4 fps with YOLO's built-in tracker. Every person
+         gets a persistent <strong>#ID</strong> and a motion trail; the banner counts
+         unique visitors to the queue polygon this session. Watch IDs swap or
+         reset when people cross paths or hide behind things &mdash; that's the hard
+         part of tracking, live.</p>
+    </hgroup>
+    <div id="live-placeholder" class="placeholder" onclick="startLive()">
+      <span>▶ Start live tracking (runs YOLO 4×/sec on your Mac)</span>
+    </div>
+    <img id="live" alt="Live tracking feed" style="display:none">
+
+    <hgroup style="margin-top:2rem">
+      <h2>Latest snapshot analysis</h2>
+      <p>The 15-second dashboard loop's most recent frame. Cyan = motion region
+         (red pixels changed between frames). Yellow = queue polygon. Green
+         boxes = people counted in the queue; gray = people elsewhere.</p>
     </hgroup>
     <img id="frame" src="/static/debug_frame.jpg" alt="Annotated debug frame">
     <p><a href="/">← Back to dashboard</a></p>
   </main>
   <script>
+    function startLive() {
+      document.getElementById("live-placeholder").style.display = "none";
+      const img = document.getElementById("live");
+      img.style.display = "block";
+      img.src = "/api/live-feed";
+    }
     setInterval(() => {
       document.getElementById("frame").src = "/static/debug_frame.jpg?" + Date.now();
     }, 15000);
