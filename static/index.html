@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Gondola Cam CV</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <main class="container">
+    <hgroup>
+      <h1>Gondola Cam CV</h1>
+      <p>Winter Park gondola &mdash; live computer vision <span id="stale-badge" class="badge stale hidden">stale</span></p>
+    </hgroup>
+
+    <div class="video-wrap">
+      <iframe id="player" src="" title="Live gondola cam"
+              allow="autoplay; encrypted-media" allowfullscreen></iframe>
+    </div>
+
+    <div class="cards">
+      <article class="card" id="card-gondola">
+        <header>Gondola</header>
+        <p class="verdict" id="gondola-verdict">&mdash;</p>
+        <small id="gondola-detail"></small>
+      </article>
+      <article class="card" id="card-line">
+        <header>Lift line</header>
+        <p class="verdict" id="line-verdict">&mdash;</p>
+        <small id="line-detail"></small>
+      </article>
+      <article class="card" id="card-weather">
+        <header>Weather</header>
+        <p class="verdict" id="weather-verdict">&mdash;</p>
+        <small id="weather-detail"></small>
+      </article>
+    </div>
+
+    <article>
+      <header>Last 2 hours</header>
+      <div class="timeline" id="timeline-gondola"><span class="tl-label">lift</span><div class="tl-ticks"></div></div>
+      <div class="timeline" id="timeline-line"><span class="tl-label">line</span><div class="tl-ticks"></div></div>
+      <div class="timeline" id="timeline-weather"><span class="tl-label">wx</span><div class="tl-ticks"></div></div>
+      <small id="summary"></small>
+    </article>
+
+    <p><a href="/static/debug.html">Debug view: see what the CV sees →</a></p>
+  </main>
+  <script src="/static/app.js"></script>
+</body>
+</html>
