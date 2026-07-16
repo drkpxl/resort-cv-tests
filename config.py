@@ -34,6 +34,15 @@ LINE_SHORT_MIN = 4             # people count => "short" at this many
 LINE_LONG_MIN = 11             # people count => "long" at this many
 
 # --- Weather (classical CV: brightness / contrast / color stats) ---
+# Camera location, for computing sun elevation. Dusk light is statistically
+# identical to overcast (flat, gray, desaturated) and auto-exposure hides
+# darkness, so pixel stats alone can't tell sunset from rain. Astronomy can.
+RESORT_LAT = 39.8868
+RESORT_LON = -105.7625
+NIGHT_SUN_ELEVATION = -6.0     # sun below this (civil twilight ends) => night
+TWILIGHT_SUN_ELEVATION = 6.0   # sun below this => twilight; the resort sits
+                               # in a valley, so light goes flat well before
+                               # geometric sunset
 # Note: this camera sees almost no sky, so we infer weather from light on
 # the scene itself: shadows (contrast), color saturation, ground whiteness.
 NIGHT_MEAN_LUMA = 45.0         # mean gray below this => night

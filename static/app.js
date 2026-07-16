@@ -1,4 +1,4 @@
-const WEATHER_ICONS = { sunny: "☀️ Sunny", rainy: "🌧️ Rainy", snow: "❄️ Snow", night: "🌙 Night" };
+const WEATHER_ICONS = { sunny: "☀️ Sunny", rainy: "🌧️ Rainy", snow: "❄️ Snow", night: "🌙 Night", twilight: "🌆 Twilight" };
 const LINE_LABELS = { none: "No line", short: "Short line", long: "Long line" };
 
 function setCard(id, cls, verdict, detail) {
