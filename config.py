@@ -30,6 +30,11 @@ QUEUE_POLYGON = [
 PERSON_CONFIDENCE = 0.25
 YOLO_IMAGE_SIZE = 1280         # match native stream width; default 640 misses
                                # the tiny (~20px) people in this wide shot
+# Which detector the app uses: "yolov8n" (CNN, 3M params, fast) or
+# "rtdetr-l" (transformer, 32M params, claims better occlusion handling -
+# relevant because a lift line IS overlapping people). Weights auto-download.
+# Compare them on real frames with: uv run python -m analysis.compare
+DETECTOR_MODEL = "yolov8n"
 LINE_SHORT_MIN = 4             # people count => "short" at this many
 LINE_LONG_MIN = 11             # people count => "long" at this many
 

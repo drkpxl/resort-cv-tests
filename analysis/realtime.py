@@ -42,8 +42,9 @@ def _get_model():
     # model object, and the dashboard loop's predict() calls would share it.
     global _model
     if _model is None:
-        from ultralytics import YOLO
-        _model = YOLO("yolov8n.pt")
+        from ultralytics import RTDETR, YOLO
+        cls = RTDETR if config.DETECTOR_MODEL.startswith("rtdetr") else YOLO
+        _model = cls(f"{config.DETECTOR_MODEL}.pt")
     return _model
 
 

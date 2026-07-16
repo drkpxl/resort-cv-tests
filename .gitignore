@@ -1,8 +1,9 @@
 .venv/
 __pycache__/
 data.db
-yolov8n.pt
+*.pt
 static/debug_frame.jpg
 frame_a.jpg
 frame_b.jpg
 debug_test.jpg
+compare_out/
