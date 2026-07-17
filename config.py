@@ -68,6 +68,38 @@ REALTIME_WIDTH = 1280
 REALTIME_HEIGHT = 720
 TRAIL_LENGTH = 40              # tracked positions kept per person (~10s)
 
+# --- Parking-lot capacity (separate experiment; different stream) ---
+# High-oblique event-lot cam. Same COCO detector as the lift line, but on
+# vehicle classes, plus segmentation for true silhouette coverage.
+PARKING_STREAM_URL = "https://www.youtube.com/watch?v=ta-4QZbfMXc"
+# Segmentation model gives per-vehicle silhouette masks (not just boxes), so
+# coverage measures painted metal, not the gaps between cars. Drop-in sibling
+# of yolov8n; weights auto-download on first run.
+PARKING_SEG_MODEL = "yolov8n-seg"
+PARKING_CONFIDENCE = 0.25
+PARKING_IMAGE_SIZE = 1280       # wide shot; far cars are ~15px (gondola lesson)
+# COCO vehicle class ids: 2 car, 3 motorcycle, 5 bus, 7 truck
+PARKING_VEHICLE_CLASSES = [2, 3, 5, 7]
+PARKING_CAPACITY = 300          # denominator for the count-based estimate;
+                                # a starting guess, resort is confirming real #
+# Lot ground-plane quad as fractional coords, ordered
+# far-left(vanishing) -> far-right -> near-right -> near-left. Tune in the
+# debug image. This defines both what counts as "in the lot" and the
+# homography used to flatten perspective.
+PARKING_LOT_QUAD = [
+    (0.14, 0.28),
+    (0.98, 0.42),
+    (0.98, 0.98),
+    (0.05, 0.95),
+]
+# Bird's-eye output size (top-down). Assumes the lot runs deeper (toward the
+# vanishing point) than it is wide; purely a rendering/weighting choice.
+PARKING_BEV_WIDTH = 600
+PARKING_BEV_HEIGHT = 900
+# Fullness bucket edges as occupied-fraction cutoffs -> labels below in code:
+# <5% empty, then quarter / half / three-quarter / full at the midpoints.
+PARKING_BUCKET_EDGES = (0.05, 0.375, 0.625, 0.875)
+
 # --- Storage / server ---
 DB_PATH = "data.db"
 DEBUG_FRAME_PATH = "static/debug_frame.jpg"
