@@ -5,10 +5,12 @@ YOUTUBE_URL = "https://www.youtube.com/watch?v=4a-3iEM7bHk"  # Brighton lot
 GRAB_MAX_HEIGHT = 720
 
 # --- Lot geometry ---------------------------------------------------------
-# Fractional (0-1) polygon over the parking surface, ordered
-# far-left -> far-right -> near-right -> near-left. Tune per camera.
-# Top edge raised to include the far parking row (was clipping ~20 real cars).
-LOT_POLYGON = [(0.03, 0.33), (0.90, 0.30), (0.99, 0.99), (0.01, 0.99)]
+# Full frame by default — count every vehicle the detector finds, so the
+# boundary never clips real cars. Only draw a tighter polygon (fractional
+# corners far-left -> far-right -> near-right -> near-left) if this camera sees
+# vehicles OUTSIDE the lot (a through-road, a neighboring lot) that inflate the
+# count. Check any custom polygon by drawing it on a frame first.
+LOT_POLYGON = [(0.0, 0.0), (1.0, 0.0), (1.0, 1.0), (0.0, 1.0)]
 CAPACITY = 150  # rough guess; only used for the (uncalibrated) count/capacity %
 
 # --- Vision floor (YOLO detector) -----------------------------------------

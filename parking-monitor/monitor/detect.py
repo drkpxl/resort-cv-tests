@@ -43,15 +43,26 @@ def _weight_map(hom: np.ndarray, shape) -> np.ndarray:
     return abs(np.linalg.det(hom)) / np.abs(denom) ** 3
 
 
-def _iou(a, b) -> float:
+def _inter(a, b) -> float:
     ax1, ay1, ax2, ay2 = a
     bx1, by1, bx2, by2 = b
-    ix1, iy1 = max(ax1, bx1), max(ay1, by1)
-    ix2, iy2 = min(ax2, bx2), min(ay2, by2)
-    iw, ih = max(0.0, ix2 - ix1), max(0.0, iy2 - iy1)
-    inter = iw * ih
-    ua = (ax2 - ax1) * (ay2 - ay1) + (bx2 - bx1) * (by2 - by1) - inter
+    iw = max(0.0, min(ax2, bx2) - max(ax1, bx1))
+    ih = max(0.0, min(ay2, by2) - max(ay1, by1))
+    return iw * ih
+
+
+def _iou(a, b) -> float:
+    inter = _inter(a, b)
+    ua = (a[2] - a[0]) * (a[3] - a[1]) + (b[2] - b[0]) * (b[3] - b[1]) - inter
     return inter / ua if ua > 0 else 0.0
+
+
+def _ios(a, b) -> float:
+    """Intersection over the smaller box — catches a partial (cut) box that sits
+    mostly inside a full-car box, which IoU misses."""
+    inter = _inter(a, b)
+    smaller = min((a[2] - a[0]) * (a[3] - a[1]), (b[2] - b[0]) * (b[3] - b[1]))
+    return inter / smaller if smaller > 0 else 0.0
 
 
 def _detect_tiled(frame: np.ndarray):
@@ -80,10 +91,24 @@ def _detect_tiled(frame: np.ndarray):
                 cv2.fillPoly(mask, [(poly + [x0, y0]).astype(np.int32)], 1)
                 raw.append((g, (int((g[0] + g[2]) / 2), int(g[3])), float(box.conf[0])))
 
+    # De-dup across tile seams. Box-IoU alone misses same-car duplicates whose
+    # partial boxes barely overlap; footprint distance catches them, because the
+    # same car (seen in two tiles) shares a base point while two adjacent cars sit
+    # ~a car-width apart. Drop a detection if it overlaps (IoU) OR its footprint is
+    # within ~half its own width of one already kept.
     raw.sort(key=lambda d: d[2], reverse=True)
     kept = []
     for det in raw:
-        if all(_iou(det[0], k[0]) < 0.45 for k in kept):
+        (bx1, _by1, bx2, _by2), (fx, fy), _conf = det
+        rad = 0.5 * max(1.0, bx2 - bx1)
+        dup = False
+        for k in kept:
+            if (_iou(det[0], k[0]) >= 0.45          # heavy box overlap
+                    or _ios(det[0], k[0]) >= 0.55   # partial box inside another
+                    or (fx - k[1][0]) ** 2 + (fy - k[1][1]) ** 2 < rad * rad):
+                dup = True
+                break
+        if not dup:
             kept.append(det)
     return mask, kept
 
