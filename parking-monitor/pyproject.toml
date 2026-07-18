@@ -1,0 +1,15 @@
+[project]
+name = "parking-monitor"
+version = "0.1.0"
+description = "Webcam parking-lot occupancy monitor: YOLO floor + local vision LLM adds the misses"
+requires-python = ">=3.11"
+dependencies = [
+    "ultralytics>=8.3",
+    "pillow>=10",
+    "fastapi>=0.115",
+    "uvicorn>=0.30",
+]
+
+# Application, not a library — no build step.
+[tool.uv]
+package = false
