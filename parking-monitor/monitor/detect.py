@@ -27,8 +27,10 @@ def _quad_pixels(shape) -> np.ndarray:
 
 
 def _homography(quad: np.ndarray) -> np.ndarray:
-    W, H = config.BEV_SIZE
-    dst = np.array([[0, 0], [W, 0], [W, H], [0, H]], dtype=np.float32)
+    # Map the lot quad to a unit rectangle. The destination size is arbitrary:
+    # it scales the coverage weight map uniformly, which cancels in the coverage
+    # ratio. The near/far weighting comes entirely from the quad's placement.
+    dst = np.array([[0, 0], [1, 0], [1, 1], [0, 1]], dtype=np.float32)
     return cv2.getPerspectiveTransform(quad, dst)
 
 

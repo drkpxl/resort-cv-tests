@@ -18,7 +18,6 @@ CONF = 0.15                     # lower = more recall on distant/dusk cars
 VEHICLE_CLASSES = [2, 3, 5, 7]  # COCO: car, motorcycle, bus, truck
 TILES = (5, 6)                  # SAHI grid (rows, cols); (6,8)+ over-fragments here
 OVERLAP = 0.25
-BEV_SIZE = (600, 900)           # top-down rect for the perspective-weight homography
 
 # --- LLM add-misses (local Ollama) ----------------------------------------
 OLLAMA_HOST = "http://localhost:11434"
