@@ -21,11 +21,11 @@ VEHICLE_CLASSES = [2, 3, 5, 7]  # COCO: car, motorcycle, bus, truck
 TILES = (5, 6)                  # SAHI grid (rows, cols); (6,8)+ over-fragments here
 OVERLAP = 0.25
 
-# --- LLM add-misses (local Ollama) ----------------------------------------
-OLLAMA_HOST = "http://localhost:11434"
-LLM_MODEL = "gemma4:e4b"
+# --- LLM add-misses (local oMLX, OpenAI-compatible) -------------------------
+OLMX_HOST = "http://127.0.0.1:8000/v1"
+OLMX_API_KEY = "sk-olmx"
+LLM_MODEL = "unsloth-gemma-4-E4B-it-qat-oQ4"
 LLM_THINK = False               # thinking spirals on small models — keep OFF
-LLM_KEEP_ALIVE = "30s"          # unload between cycles (tight-RAM box)
 LLM_TIMEOUT = 180
 
 # --- Schedule / storage / web ---------------------------------------------
