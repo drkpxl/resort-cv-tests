@@ -24,17 +24,18 @@ def run_once() -> dict:
     img_dir, thumb_dir = _dirs()
     ts = datetime.datetime.now(datetime.timezone.utc).strftime("%Y%m%dT%H%M%SZ")
 
-    # 1. snapshot
+    # 1. snapshot (keep the raw full frame for reference / re-processing)
     frame = grab.grab_frame()
-    full_path = os.path.join(img_dir, f"{ts}.jpg")
-    cv2.imwrite(full_path, frame)
+    cv2.imwrite(os.path.join(img_dir, f"{ts}.jpg"), frame)
 
-    # 2. vision floor + overlay
+    # 2. vision floor + overlay (red masks + green dots) — the marked image the
+    #    web app shows, so a human can eyeball-count the dots.
     vision_count, coverage_pct, overlay = detect.detect(frame)
-    cv2.imwrite(os.path.join(img_dir, f"{ts}_floor.jpg"), overlay)
+    overlay_path = os.path.join(img_dir, f"{ts}_floor.jpg")
+    cv2.imwrite(overlay_path, overlay)
 
-    # 3. thumbnail of the full frame
-    im = Image.open(full_path)
+    # 3. thumbnail of the OVERLAY (with the dots)
+    im = Image.open(overlay_path)
     im.thumbnail((320, 320))
     im.save(os.path.join(thumb_dir, f"{ts}.jpg"), "JPEG", quality=80)
 
@@ -50,7 +51,7 @@ def run_once() -> dict:
 
     row = {
         "ts": ts,
-        "image_url": f"/images/{ts}.jpg",
+        "image_url": f"/images/{ts}_floor.jpg",   # overlay: red masks + green dots
         "thumb_url": f"/thumbs/{ts}.jpg",
         "vision_count": vision_count,
         "llm_count": llm_count,
