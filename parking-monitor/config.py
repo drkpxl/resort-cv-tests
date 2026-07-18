@@ -7,15 +7,16 @@ GRAB_MAX_HEIGHT = 720
 # --- Lot geometry ---------------------------------------------------------
 # Fractional (0-1) polygon over the parking surface, ordered
 # far-left -> far-right -> near-right -> near-left. Tune per camera.
-LOT_POLYGON = [(0.02, 0.44), (0.85, 0.31), (0.99, 0.99), (0.01, 0.99)]
+# Top edge raised to include the far parking row (was clipping ~20 real cars).
+LOT_POLYGON = [(0.03, 0.33), (0.90, 0.30), (0.99, 0.99), (0.01, 0.99)]
 CAPACITY = 150  # rough guess; only used for the (uncalibrated) count/capacity %
 
 # --- Vision floor (YOLO detector) -----------------------------------------
 VISION_MODEL = "yolov8x-seg"   # high recall; weights auto-download (~140MB)
 YOLO_IMGSZ = 1280
-CONF = 0.25
+CONF = 0.15                     # lower = more recall on distant/dusk cars
 VEHICLE_CLASSES = [2, 3, 5, 7]  # COCO: car, motorcycle, bus, truck
-TILES = (4, 5)                  # SAHI grid (rows, cols); raise for more recall
+TILES = (5, 6)                  # SAHI grid (rows, cols); (6,8)+ over-fragments here
 OVERLAP = 0.25
 BEV_SIZE = (600, 900)           # top-down rect for the perspective-weight homography
 
